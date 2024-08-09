@@ -1,3 +1,5 @@
+import Collections from './main/Collections';
+
 export const metadata = {
   title: 'Collections',
 };
@@ -10,10 +12,13 @@ export default function Home() {
           Collections
         </h1>
         <div className='flex gap-2 text-slate-500'>
-        <div className='pr-2 border-r-2 border-slate-300'>login</div>
-        <div className='pr-5'>register</div>
+          <div className='pr-2 border-r-2 border-slate-300'>login</div>
+          <div className='pr-5'>register</div>
         </div>
       </nav>
+      <main>
+        <Collections />
+      </main>
     </>
   );
 }

@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
 import { Inter, Open_Sans } from 'next/font/google';
 import './globals.css';
+import { NextUIProvider } from '@nextui-org/react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-const openSans = Open_Sans({ 
-  weight: ["300", "400", "500", "700"],
-  style: ["normal"],
-  subsets: ['latin'], 
-  variable: '--font-open-sans' });
+const openSans = Open_Sans({
+  weight: ['300', '400', '500', '700'],
+  style: ['normal'],
+  subsets: ['latin'],
+  variable: '--font-open-sans',
+});
 
 export const metadata: Metadata = {
   title: 'Collection App',
@@ -21,14 +23,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang='en'
-      className={`${inter.variable}, ${openSans.variable}`}
-    >
+    <html lang='en' className={`${inter.variable} ${openSans.variable}`}>
       <head>
         <link rel='icon' type='image/png' sizes='32x32' href='/favicon.png' />
       </head>
-      <body>{children}</body>
+      <body>
+        <NextUIProvider>{children}</NextUIProvider>
+      </body>
     </html>
   );
 }
