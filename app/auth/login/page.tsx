@@ -35,7 +35,6 @@ export default function Login() {
         router.push('/dashboard');
         router.refresh();
       }
-      console.log(res);
     } else {
       console.error('Sign-in failed: No response from signIn function');
     }

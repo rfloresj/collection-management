@@ -1,4 +1,3 @@
-// app/api/auth/authOptions.ts
 import CredentialsProvider from 'next-auth/providers/credentials';
 import db from '@/libs/db';
 import bcrypt from 'bcrypt';

@@ -41,7 +41,7 @@ export default function Collections() {
   return (
     <div className="mt-6 gap-3 grid grid-cols-1 sm:grid-cols-4 px-6">
       {list.map((item, index) => (
-        <Card shadow="sm" key={index} isPressable onPress={() => console.log("item pressed")}>
+        <Card shadow="sm" key={index} isPressable>
           <CardBody className="overflow-visible p-0">
             <Image
               shadow="sm"

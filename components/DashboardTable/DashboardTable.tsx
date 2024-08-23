@@ -24,6 +24,7 @@ import { ChevronDownIcon } from './ChevronDownIcon';
 import { columns, users, statusOptions } from './data';
 import { capitalize } from './utils';
 import { useState, useMemo, useCallback } from 'react';
+import { Key } from '@react-types/shared';
 
 interface User {
   id: number;
@@ -59,16 +60,19 @@ const INITIAL_VISIBLE_COLUMNS = new Set(['name', 'role', 'status', 'actions']);
 function DashboardTable() {
   const [filterValue, setFilterValue] = useState<string>('');
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
-  const handleSelectionChange = (keys: any) => {
-    setSelectedKeys(new Set(keys));
+  
+  const handleSelectionChange = (keys: "all" | Set<Key>) => {
+    if (keys === 'all') {
+      setSelectedKeys(new Set(users.map(user => user.id.toString())));
+    } else {
+      setSelectedKeys(new Set(Array.from(keys).map(key => key.toString())));
+    }
   };
 
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
     INITIAL_VISIBLE_COLUMNS
   );
-  const [statusFilter, setStatusFilter] = useState<Set<string>>(
-    new Set(['all'])
-  );
+  const [statusFilter, setStatusFilter] = useState<string | Set<string>>('all');
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: 'age',
@@ -93,22 +97,19 @@ function DashboardTable() {
 
   const filteredItems = useMemo(() => {
     let filteredUsers = [...users];
-
+  
     if (hasSearchFilter) {
       filteredUsers = filteredUsers.filter((user) =>
         user.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
-
-    if (
-      !statusFilter.has('all') &&
-      statusFilter.size !== statusOptions.length
-    ) {
+  
+    if (statusFilter !== 'all' && statusFilter instanceof Set && statusFilter.size > 0) {
       filteredUsers = filteredUsers.filter((user) =>
-        statusFilter.has(user.status)
+        Array.from(statusFilter).includes(user.status)
       );
     }
-
+  
     return filteredUsers;
   }, [filterValue, statusFilter]);
 
