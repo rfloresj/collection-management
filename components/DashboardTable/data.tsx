@@ -1,4 +1,14 @@
-import React from "react";
+interface User {
+  id: number;
+  name: string;
+  role: string;
+  team: string;
+  status: 'active' | 'paused' | 'vacation';
+  age: string;
+  avatar: string;
+  email: string;
+}
+
 const columns = [
   {name: "ID", uid: "id", sortable: true},
   {name: "NAME", uid: "name", sortable: true},
@@ -16,7 +26,7 @@ const statusOptions = [
   {name: "Vacation", uid: "vacation"},
 ];
 
-const users = [
+const users: User[] = [
   {
     id: 1,
     name: "Tony Reichert",

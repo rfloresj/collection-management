@@ -24,7 +24,6 @@ import { ChevronDownIcon } from './ChevronDownIcon';
 import { columns, users, statusOptions } from './data';
 import { capitalize } from './utils';
 import { useState, useMemo, useCallback } from 'react';
-import { Key } from '@react-types/shared'; // Import Key
 
 interface User {
   id: number;
@@ -38,11 +37,18 @@ interface User {
 }
 
 interface SortDescriptor {
-  column: Key | undefined;
+  column: string;
   direction: 'ascending' | 'descending';
 }
 
-const statusColorMap: Record<'active' | 'paused' | 'vacation', 'success' | 'danger' | 'warning'> = {
+interface TableColumn extends User {
+  actions?: string;
+}
+
+const statusColorMap: Record<
+  'active' | 'paused' | 'vacation',
+  'success' | 'danger' | 'warning'
+> = {
   active: 'success',
   paused: 'danger',
   vacation: 'warning',
@@ -53,6 +59,10 @@ const INITIAL_VISIBLE_COLUMNS = new Set(['name', 'role', 'status', 'actions']);
 function DashboardTable() {
   const [filterValue, setFilterValue] = useState<string>('');
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
+  const handleSelectionChange = (keys: any) => {
+    setSelectedKeys(new Set(keys));
+  };
+
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
     INITIAL_VISIBLE_COLUMNS
   );
@@ -64,6 +74,13 @@ function DashboardTable() {
     column: 'age',
     direction: 'ascending',
   });
+  const handleSortChange = (descriptor: any) => {
+    setSortDescriptor({
+      column: descriptor.column as string,
+      direction: descriptor.direction,
+    });
+  };
+
   const [page, setPage] = useState<number>(1);
 
   const hasSearchFilter = Boolean(filterValue);
@@ -114,61 +131,64 @@ function DashboardTable() {
     });
   }, [sortDescriptor, items]);
 
-  const renderCell = useCallback((user: User, columnKey: string) => {
-    const cellValue = user[columnKey as keyof User];
+  const renderCell = useCallback(
+    (user: TableColumn, columnKey: keyof TableColumn) => {
+      const cellValue = user[columnKey];
 
-    switch (columnKey) {
-      case 'name':
-        return (
-          <User
-            avatarProps={{ radius: 'lg', src: user.avatar }}
-            description={user.email}
-            name={cellValue}
-          >
-            {user.email}
-          </User>
-        );
-      case 'role':
-        return (
-          <div className='flex flex-col'>
-            <p className='text-bold text-small capitalize'>{cellValue}</p>
-            <p className='text-bold text-tiny capitalize text-default-400'>
-              {user.team}
-            </p>
-          </div>
-        );
-      case 'status':
-        return (
-          <Chip
-            className='capitalize'
-            color={statusColorMap[user.status]}
-            size='sm'
-            variant='flat'
-          >
-            {cellValue}
-          </Chip>
-        );
-      case 'actions':
-        return (
-          <div className='relative flex justify-end items-center gap-2'>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button isIconOnly size='sm' variant='light'>
-                  <VerticalDotsIcon className='text-default-300' />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem>View</DropdownItem>
-                <DropdownItem>Edit</DropdownItem>
-                <DropdownItem>Delete</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
-        );
-      default:
-        return cellValue;
-    }
-  }, []);
+      switch (columnKey) {
+        case 'name':
+          return (
+            <User
+              avatarProps={{ radius: 'lg', src: user.avatar }}
+              description={user.email}
+              name={cellValue}
+            >
+              {user.email}
+            </User>
+          );
+        case 'role':
+          return (
+            <div className='flex flex-col'>
+              <p className='text-bold text-small capitalize'>{cellValue}</p>
+              <p className='text-bold text-tiny capitalize text-default-400'>
+                {user.team}
+              </p>
+            </div>
+          );
+        case 'status':
+          return (
+            <Chip
+              className='capitalize'
+              color={statusColorMap[user.status]}
+              size='sm'
+              variant='flat'
+            >
+              {cellValue}
+            </Chip>
+          );
+        case 'actions':
+          return (
+            <div className='relative flex justify-end items-center gap-2'>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button isIconOnly size='sm' variant='light'>
+                    <VerticalDotsIcon className='text-default-300' />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu>
+                  <DropdownItem>View</DropdownItem>
+                  <DropdownItem>Edit</DropdownItem>
+                  <DropdownItem>Delete</DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
+          );
+        default:
+          return cellValue;
+      }
+    },
+    []
+  );
 
   const onNextPage = useCallback(() => {
     if (page < pages) {
@@ -357,8 +377,8 @@ function DashboardTable() {
         sortDescriptor={sortDescriptor}
         topContent={topContent}
         topContentPlacement='outside'
-        onSelectionChange={setSelectedKeys}
-        onSortChange={setSortDescriptor}
+        onSelectionChange={handleSelectionChange}
+        onSortChange={handleSortChange}
       >
         <TableHeader columns={headerColumns}>
           {(column) => (
@@ -376,7 +396,7 @@ function DashboardTable() {
             <TableRow key={item.id}>
               {(columnKey) => (
                 <TableCell>
-                  {renderCell(item, columnKey)}
+                  {renderCell(item, columnKey as keyof User)}
                 </TableCell>
               )}
             </TableRow>
