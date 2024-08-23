@@ -20,4 +20,24 @@ model User {
   password String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  collections Collection[]
+}
+
+model Collection {
+  id Int @id @default(autoincrement())
+  name String
+  description String
+  attributes String? @db.Text
+  user User? @relation(fields: [userId], references: [id])  
+  userId Int?
+  items Item[]
+}
+
+model Item {
+  id Int @id @default(autoincrement())
+  name String
+  tags String[]
+  attributes String @db.Text
+  collection Collection @relation(fields: [collectionId], references: [id])
+  collectionId Int
 }
