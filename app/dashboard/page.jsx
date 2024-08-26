@@ -1,11 +1,12 @@
 import Navbar from '@/components/Navbar';
-import DashboardTable from '@/components/DashboardTable/DashboardTable'
+import DashboardTable from '@/components/DashboardTable/DashboardTable';
 
-function Dashboard() {
+function Dashboard({params, searchParams}) {
+  console.log('SearchParams:::', params, searchParams);
   return (
     <>
-    <Navbar />
-    <DashboardTable />
+      <Navbar />
+      <DashboardTable />
     </>
   );
 }
