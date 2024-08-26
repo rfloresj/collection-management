@@ -1,26 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import db from '@/libs/db';
+import { NextRequest, NextResponse } from "next/server";
+import db from "@/libs/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/authOptions";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, response: NextResponse) {
   try {
-    const userId = request?.nextUrl?.searchParams?.get('userId');
+    const session = await getServerSession();
 
-    if (!userId) {
+    if (!session?.user?.email) {
       return NextResponse.json(
         {
-          message: 'User id not provided',
+          message: "No authenticated user",
         },
         {
-          status: 400,
+          status: 403,
         }
       );
     }
 
-    const collections = await db.collection.findMany({
-      where: { userId: Number(userId) },
+    const result = await db.user.findUnique({
+      where: { email: session?.user?.email },
+      include: {
+        collections: true
+      }
     });
 
-    return NextResponse.json(collections);
+    return NextResponse.json(result?.collections);
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json(
@@ -33,7 +38,7 @@ export async function GET(request: NextRequest) {
       );
     } else {
       return NextResponse.json({
-        message: 'An unknown error ocurred',
+        message: "An unknown error ocurred",
       });
     }
   }
@@ -42,7 +47,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.json();
-    console.log('createCollection', payload, request.body);
+    // console.log('createCollection', payload, request.body);
     const newCollection = await db.collection.create({
       data: {
         name: payload.name,
@@ -54,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'Successfully created',
+        message: "Successfully created",
         data: newCollection,
       },
       {
@@ -73,7 +78,7 @@ export async function POST(request: NextRequest) {
       );
     } else {
       return NextResponse.json({
-        message: 'An unknown error ocurred',
+        message: "An unknown error ocurred",
       });
     }
   }
