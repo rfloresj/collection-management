@@ -102,7 +102,7 @@ function DashboardTable() {
   const handleSelectionChange = (keys: "all" | Set<Key>) => {
     if (keys === "all") {
       setSelectedKeys(
-        new Set(collectionItems?.map((item) => item.id.toString()))
+        new Set(collectionItems?.map((item: any) => item.id.toString()))
       );
     } else {
       setSelectedKeys(new Set(Array.from(keys).map((key) => key.toString())));
