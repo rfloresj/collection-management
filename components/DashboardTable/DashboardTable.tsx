@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Table,
@@ -18,26 +18,23 @@ import {
   ListboxItem,
   Listbox,
   CircularProgress,
-} from "@nextui-org/react";
-import { PlusIcon } from "./PlusIcon";
-import { VerticalDotsIcon } from "./VerticalDotsIcon";
-import { SearchIcon } from "./SearchIcon";
-import { columns } from "./data";
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { Key } from "@react-types/shared";
-import { useQuery } from "@tanstack/react-query";
+} from '@nextui-org/react';
+import { PlusIcon } from './PlusIcon';
+import { VerticalDotsIcon } from './VerticalDotsIcon';
+import { SearchIcon } from './SearchIcon';
+import { columns } from './data';
+import { useState, useMemo, useCallback } from 'react';
+import { Key } from '@react-types/shared';
+import { useQuery } from '@tanstack/react-query';
 
 interface SortDescriptor {
   column: string;
-  direction: "ascending" | "descending";
+  direction: 'ascending' | 'descending';
 }
 
 function DashboardTable() {
-  const {
-    isPending,
-    data: collections,
-  } = useQuery({
-    queryKey: ["get_collections"],
+  const { isPending, data: collections } = useQuery({
+    queryKey: ['get_collections'],
     queryFn: async () => {
       const response = await fetch(`/api/collections`);
       return await response.json();
@@ -49,12 +46,12 @@ function DashboardTable() {
   >();
 
   const tableColumns = useMemo(() => {
-    if(!selectedCollection) {
+    if (!selectedCollection) {
       return columns;
     }
 
     const currentCollection = collections.find(
-      ({ id }: { id: number }) => id === id
+      ({ id }: { id: number }) => id === selectedCollection
     );
 
     if (currentCollection?.attributes) {
@@ -69,14 +66,14 @@ function DashboardTable() {
         }
       );
 
-      return [...columns, ...customCols, { name: "ACTIONS", uid: "actions" }];
+      return [...columns, ...customCols, { name: 'ACTIONS', uid: 'actions' }];
     }
 
     return columns;
   }, [selectedCollection]);
 
   const { data: collectionItems } = useQuery({
-    queryKey: ["get_collection_elements", selectedCollection],
+    queryKey: ['get_collection_elements', selectedCollection],
     queryFn: async () => {
       const response = await fetch(
         `/api/items?collectionId=${selectedCollection}`
@@ -85,6 +82,7 @@ function DashboardTable() {
 
       const parsedItems = items.map(
         ({ attributes, ...rest }: { attributes: string }) => {
+          // console.log(attributes);
           const customCols = attributes ? JSON.parse(attributes) : {};
 
           return { ...rest, ...customCols };
@@ -96,11 +94,11 @@ function DashboardTable() {
     enabled: !!selectedCollection,
   });
 
-  const [filterValue, setFilterValue] = useState<string>("");
+  const [filterValue, setFilterValue] = useState<string>('');
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
 
-  const handleSelectionChange = (keys: "all" | Set<Key>) => {
-    if (keys === "all") {
+  const handleSelectionChange = (keys: 'all' | Set<Key>) => {
+    if (keys === 'all') {
       setSelectedKeys(
         new Set(collectionItems?.map((item: any) => item.id.toString()))
       );
@@ -111,8 +109,8 @@ function DashboardTable() {
 
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: "age",
-    direction: "ascending",
+    column: 'age',
+    direction: 'ascending',
   });
   const handleSortChange = (descriptor: any) => {
     setSortDescriptor({
@@ -153,9 +151,15 @@ function DashboardTable() {
     return [...items].sort((a, b) => {
       const first = a[sortDescriptor.column];
       const second = b[sortDescriptor.column];
-      const cmp = first < second ? -1 : first > second ? 1 : 0;
+      const compareValues = (first: any, second: any) => {
+        if (first < second) return -1;
+        if (first > second) return 1;
+        return 0;
+      };
 
-      return sortDescriptor.direction === "descending" ? -cmp : cmp;
+      const cmp = compareValues(first, second);
+
+      return sortDescriptor.direction === 'descending' ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
 
@@ -163,27 +167,29 @@ function DashboardTable() {
     const cellValue = item[columnKey];
 
     switch (columnKey) {
-      case "tags":
+      case 'tags':
         return (
-          <div className="flex flex-row gap-1">
-            {cellValue?.map?.((tag: string) => (
-              <Chip color="primary">{tag}</Chip>
+          <div className='flex flex-row gap-1'>
+            {cellValue?.map?.((tag: string, index: number) => (
+              <Chip key={`${tag}-${index}`} color='primary'>
+                {tag}
+              </Chip>
             ))}
           </div>
         );
-      case "actions":
+      case 'actions':
         return (
-          <div className="relative flex justify-end items-center gap-2">
+          <div className='relative flex justify-end items-center gap-2'>
             <Dropdown>
               <DropdownTrigger>
-                <Button isIconOnly size="sm" variant="light">
-                  <VerticalDotsIcon className="text-default-300" />
+                <Button isIconOnly size='sm' variant='light'>
+                  <VerticalDotsIcon className='text-default-300' />
                 </Button>
               </DropdownTrigger>
               <DropdownMenu>
-                <DropdownItem>View</DropdownItem>
-                <DropdownItem>Edit</DropdownItem>
-                <DropdownItem>Delete</DropdownItem>
+                <DropdownItem key='view'>View</DropdownItem>
+                <DropdownItem key='edit'>Edit</DropdownItem>
+                <DropdownItem key='delete'>Delete</DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </div>
@@ -218,47 +224,47 @@ function DashboardTable() {
       setFilterValue(value);
       setPage(1);
     } else {
-      setFilterValue("");
+      setFilterValue('');
     }
   }, []);
 
   const onClear = useCallback(() => {
-    setFilterValue("");
+    setFilterValue('');
     setPage(1);
   }, []);
 
   const topContent = useMemo(() => {
     return (
-      <div className="flex flex-col gap-4 py-0">
-        <div className="flex justify-between gap-3 items-end">
+      <div className='flex flex-col gap-4 py-0'>
+        <div className='flex justify-between gap-3 items-end'>
           <Input
             isClearable
-            className="w-full sm:max-w-[44%]"
-            placeholder="Search by name..."
+            className='w-full sm:max-w-[44%]'
+            placeholder='Search by name...'
             startContent={<SearchIcon />}
             value={filterValue}
             onClear={() => onClear()}
             onValueChange={onSearchChange}
           />
-          <div className="flex gap-3">
-            <Button color="primary" endContent={<PlusIcon />}>
+          <div className='flex gap-3'>
+            <Button color='primary' endContent={<PlusIcon />}>
               Add New
             </Button>
           </div>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-default-400 text-small">
+        <div className='flex justify-between items-center'>
+          <span className='text-default-400 text-small'>
             Total {collectionItems?.length} items
           </span>
-          <label className="flex items-center text-default-400 text-small">
+          <label className='flex items-center text-default-400 text-small'>
             Rows per page:
             <select
-              className="bg-transparent outline-none text-default-400 text-small"
+              className='bg-transparent outline-none text-default-400 text-small'
               onChange={onRowsPerPageChange}
             >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
+              <option value='5'>5</option>
+              <option value='10'>10</option>
+              <option value='15'>15</option>
             </select>
           </label>
         </div>
@@ -274,34 +280,34 @@ function DashboardTable() {
 
   const bottomContent = useMemo(() => {
     return (
-      <div className="flex justify-between items-center">
-        <span className="w-[30%] text-small text-default-400">
+      <div className='flex justify-between items-center'>
+        <span className='w-[30%] text-small text-default-400'>
           {selectedKeys.size === filteredItems.length
-            ? "All items selected"
+            ? 'All items selected'
             : `${selectedKeys.size} of ${filteredItems.length} selected`}
         </span>
         <Pagination
           isCompact
           showControls
           showShadow
-          color="primary"
+          color='primary'
           page={page}
           total={pages}
           onChange={setPage}
         />
-        <div className="hidden sm:flex w-[30%] justify-end gap-2">
+        <div className='hidden sm:flex w-[30%] justify-end gap-2'>
           <Button
             isDisabled={page <= 1}
-            size="sm"
-            variant="flat"
+            size='sm'
+            variant='flat'
             onPress={onPreviousPage}
           >
             Previous
           </Button>
           <Button
             isDisabled={page >= pages}
-            size="sm"
-            variant="flat"
+            size='sm'
+            variant='flat'
             onPress={onNextPage}
           >
             Next
@@ -312,20 +318,20 @@ function DashboardTable() {
   }, [selectedKeys, items.length, page, pages, hasSearchFilter]);
 
   return (
-    <div className="flex flex-row m-8 gap-4 justify-center align-center">
+    <div className='flex flex-row m-8 gap-4 justify-center align-center'>
       {isPending ? (
-        <CircularProgress color="secondary" aria-label="Loading..." size="lg" />
+        <CircularProgress color='secondary' aria-label='Loading...' size='lg' />
       ) : (
         <>
           <Listbox
-            aria-label="User Menu"
+            aria-label='User Menu'
             onAction={(key) => setSelectedCollection(Number(key))}
-            className="p-0 gap-0 divide-y divide-default-300/50 dark:divide-default-100/80 max-w-[250px] overflow-visible shadow-small rounded-medium"
+            className='p-0 gap-0 divide-y divide-default-300/50 dark:divide-default-100/80 max-w-[250px] overflow-visible shadow-small rounded-medium'
             itemClasses={{
-              base: "px-3 first:rounded-t-medium last:rounded-b-medium rounded-none gap-3 h-12 data-[hover=true]:bg-default-100/80",
+              base: 'px-3 first:rounded-t-medium last:rounded-b-medium rounded-none gap-3 h-12 data-[hover=true]:bg-default-100/80',
             }}
             topContent={
-              <Button color="primary" className="mx-8 my-4">
+              <Button color='primary' className='mx-8 my-4'>
                 New Collection
               </Button>
             }
@@ -335,18 +341,18 @@ function DashboardTable() {
             ))}
           </Listbox>
           <Table
-            aria-label="Table with custom cells, pagination and sorting"
+            aria-label='Table with custom cells, pagination and sorting'
             isHeaderSticky
             bottomContent={bottomContent}
-            bottomContentPlacement="outside"
+            bottomContentPlacement='outside'
             classNames={{
-              wrapper: "max-h-[382px]",
+              wrapper: 'max-h-[382px]',
             }}
             selectedKeys={selectedKeys}
-            selectionMode="multiple"
+            selectionMode='multiple'
             sortDescriptor={sortDescriptor}
             topContent={topContent}
-            topContentPlacement="outside"
+            topContentPlacement='outside'
             onSelectionChange={handleSelectionChange}
             onSortChange={handleSortChange}
           >
@@ -354,18 +360,18 @@ function DashboardTable() {
               {(column) => (
                 <TableColumn
                   key={column.uid}
-                  align={column.uid === "actions" ? "center" : "start"}
+                  align={column.uid === 'actions' ? 'center' : 'start'}
                   allowsSorting={column.sortable}
                 >
                   {column.name}
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody emptyContent={"No items found"} items={sortedItems}>
+            <TableBody emptyContent={'No items found'} items={sortedItems}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) => (
-                    <TableCell>{renderCell(item, columnKey as Key)}</TableCell>
+                    <TableCell>{renderCell(item, columnKey)}</TableCell>
                   )}
                 </TableRow>
               )}
