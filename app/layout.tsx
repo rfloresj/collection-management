@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Open_Sans } from 'next/font/google';
 import './globals.css';
-import { NextUIProvider } from '@nextui-org/react';
 import { RootProviders } from './providers/RootProviders';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });

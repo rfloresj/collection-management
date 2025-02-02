@@ -43,94 +43,92 @@ export default function Login() {
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   return (
-    <>
-      <div className='title flex flex-col items-center gap-7 mt-12'>
-        <HomeLink />
-        <h1 className='font-extrabold text-3xl text-yellow-500'>
-          Log in to Collections
-        </h1>
-        <form
-          onSubmit={onSubmit}
-          className='flex flex-col flex-wrap md:flex-nowrap gap-7 w-96 px-3'
-        >
-          {error && (
-            <span className='flex justify-center items-center bg-red-500 text-small gap-2 mt-[-1rem] mb-[-0.5rem] p-1'>
-              <BsExclamationOctagon className='text-base text-slate-200' />
-              <p className='text-slate-200 text-medium font-medium'>{error}</p>
-            </span>
-          )}
-          <Input
-            variant='bordered'
-            type='email'
-            label='Email'
-            placeholder='Enter your email'
-            {...register('email', {
-              required: {
-                value: true,
-                message: 'Email is required.',
-              },
-            })}
-          />
-          {errors.email && (
-            <span className='flex items-center text-red-500 mt-[-20px] text-small ml-1 gap-2'>
-              <BsExclamationOctagon className='text-base' />
-              {typeof errors.email.message === 'string' && errors.email.message}
-            </span>
-          )}
-          <Input
-            label='Password'
-            variant='bordered'
-            placeholder='Enter your password'
-            endContent={
-              <button
-                className='focus:outline-none'
-                type='button'
-                onClick={toggleVisibility}
-                aria-label='toggle password visibility'
-              >
-                {isVisible ? (
-                  <EyeSlashFilledIcon className='text-2xl text-default-400 pointer-events-none' />
-                ) : (
-                  <EyeFilledIcon className='text-2xl text-default-400 pointer-events-none' />
-                )}
-              </button>
-            }
-            type={isVisible ? 'text' : 'password'}
-            className='max-w-auto'
-            {...register('password', {
-              required: {
-                value: true,
-                message: 'Password is required',
-              },
-            })}
-          />
-          {errors.password && (
-            <span className='flex items-center text-red-500 mt-[-20px] text-small ml-1 gap-2'>
-              <BsExclamationOctagon className='text-base' />
-              {typeof errors.password.message === 'string' &&
-                errors.password.message}
-            </span>
-          )}
-          <Button
-            type='submit'
-            className='rounded-3xl bg-yellow-500 p-2 text-base font-semibold'
-          >
-            Log in
-          </Button>
-        </form>
-        <Divider className='my-1' />
-        <footer className='flex justify-center text-sm gap-4'>
-          <span className='font-medium text-gray-600'>
-            Don&apos;t have an account?
+    <div className='title flex flex-col items-center gap-7 mt-12'>
+      <HomeLink />
+      <h1 className='font-extrabold text-3xl text-yellow-500'>
+        Log in to Collections
+      </h1>
+      <form
+        onSubmit={onSubmit}
+        className='flex flex-col flex-wrap md:flex-nowrap gap-7 w-96 px-3'
+      >
+        {error && (
+          <span className='flex justify-center items-center bg-red-500 text-small gap-2 mt-[-1rem] mb-[-0.5rem] p-1'>
+            <BsExclamationOctagon className='text-base text-slate-200' />
+            <p className='text-slate-200 text-medium font-medium'>{error}</p>
           </span>
-          <Link
-            className='text-black font-bold text-sm underline'
-            href='/auth/signup'
-          >
-            Sign up for Collections
-          </Link>
-        </footer>
-      </div>
-    </>
+        )}
+        <Input
+          variant='bordered'
+          type='email'
+          label='Email'
+          placeholder='Enter your email'
+          {...register('email', {
+            required: {
+              value: true,
+              message: 'Email is required.',
+            },
+          })}
+        />
+        {errors.email && (
+          <span className='flex items-center text-red-500 mt-[-20px] text-small ml-1 gap-2'>
+            <BsExclamationOctagon className='text-base' />
+            {typeof errors.email.message === 'string' && errors.email.message}
+          </span>
+        )}
+        <Input
+          label='Password'
+          variant='bordered'
+          placeholder='Enter your password'
+          endContent={
+            <button
+              className='focus:outline-none'
+              type='button'
+              onClick={toggleVisibility}
+              aria-label='toggle password visibility'
+            >
+              {isVisible ? (
+                <EyeSlashFilledIcon className='text-2xl text-default-400 pointer-events-none' />
+              ) : (
+                <EyeFilledIcon className='text-2xl text-default-400 pointer-events-none' />
+              )}
+            </button>
+          }
+          type={isVisible ? 'text' : 'password'}
+          className='max-w-auto'
+          {...register('password', {
+            required: {
+              value: true,
+              message: 'Password is required',
+            },
+          })}
+        />
+        {errors.password && (
+          <span className='flex items-center text-red-500 mt-[-20px] text-small ml-1 gap-2'>
+            <BsExclamationOctagon className='text-base' />
+            {typeof errors.password.message === 'string' &&
+              errors.password.message}
+          </span>
+        )}
+        <Button
+          type='submit'
+          className='rounded-3xl bg-yellow-500 p-2 text-base font-semibold'
+        >
+          Log in
+        </Button>
+      </form>
+      <Divider className='my-1' />
+      <footer className='flex justify-center text-sm gap-4'>
+        <span className='font-medium text-gray-600'>
+          Don&apos;t have an account?
+        </span>
+        <Link
+          className='text-black font-bold text-sm underline'
+          href='/auth/signup'
+        >
+          Sign up for Collections
+        </Link>
+      </footer>
+    </div>
   );
 }

@@ -12,13 +12,13 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials, req) {
-        if (!credentials || !credentials.password) {
+        if (!credentials?.password) {
           throw new Error('No credentials provided');
         }
 
         const userFound = await db.user.findUnique({
           where: {
-            email: credentials?.email,
+            email: credentials.email,
           },
         });
 
@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const matchPassword = await bcrypt.compare(
-          credentials?.password,
+          credentials.password,
           userFound.password
         );
 

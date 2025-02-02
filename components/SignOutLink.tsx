@@ -4,13 +4,13 @@ import { signOut } from 'next-auth/react';
 
 export default function SignOutLink() {
   return (
-    <a
+    <button
       onClick={() => {
         signOut();
       }}
       className='pr-5 cursor-pointer'
     >
       Sign Out
-    </a>
+    </button>
   );
 }

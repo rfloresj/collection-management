@@ -1,6 +1,6 @@
-interface iconProps extends React.SVGProps<SVGSVGElement> {}
+interface IconProps extends React.SVGProps<SVGSVGElement> {}
 
-export const EyeFilledIcon = (props: iconProps) => (
+export const EyeFilledIcon = (props: IconProps) => (
     <svg
       aria-hidden="true"
       fill="none"
