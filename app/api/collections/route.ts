@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import db from "@/libs/db";
-import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from 'next/server';
+import db from '@/libs/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/authOptions';
 
 export async function GET(request: NextRequest, response: NextResponse) {
   try {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest, response: NextResponse) {
     if (!session?.user?.email) {
       return NextResponse.json(
         {
-          message: "No authenticated user",
+          message: 'No authenticated user',
         },
         {
           status: 403,
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest, response: NextResponse) {
     const result = await db.user.findUnique({
       where: { email: session?.user?.email },
       include: {
-        collections: true
-      }
+        collections: true,
+      },
     });
 
     return NextResponse.json(result?.collections);
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest, response: NextResponse) {
       );
     } else {
       return NextResponse.json({
-        message: "An unknown error ocurred",
+        message: 'An unknown error ocurred',
       });
     }
   }
@@ -45,26 +46,23 @@ export async function GET(request: NextRequest, response: NextResponse) {
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json();
-    // console.log('createCollection', payload, request.body);
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const {name, description, attributes} = await request.json();
+
     const newCollection = await db.collection.create({
       data: {
-        name: payload.name,
-        description: payload.description,
-        attributes: payload.attributes,
-        userId: payload.userId,
+        name,
+        description,
+        attributes: JSON.stringify(attributes),
+        userId: parseInt(session.user.id),
       },
     });
 
-    return NextResponse.json(
-      {
-        message: "Successfully created",
-        data: newCollection,
-      },
-      {
-        status: 200,
-      }
-    );
+    return NextResponse.json(newCollection);
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json(
@@ -77,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     } else {
       return NextResponse.json({
-        message: "An unknown error ocurred",
+        message: 'An unknown error ocurred',
       });
     }
   }

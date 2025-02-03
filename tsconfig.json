@@ -19,8 +19,18 @@
     ],
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "typeRoots": ["./types", "./node_modules/@types"],
+    "types": ["next-auth"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/types/app/login/page.tsx", "app/api/auth/[...nextauth]"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/types/app/login/page.tsx",
+    "app/api/auth/[...nextauth]",
+    "types/**/*.d.ts"
+  ],
   "exclude": ["node_modules"]
 }
