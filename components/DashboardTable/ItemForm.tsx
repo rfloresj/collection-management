@@ -1,29 +1,42 @@
 'use client';
 
-import {
-  Modal,
-  Input,
-  Button,
-  ModalBody,
-  ModalHeader,
-} from '@nextui-org/react';
+import { Modal, Input, Button, ModalBody, ModalHeader } from '@nextui-org/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { useState, useEffect } from 'react';
 
-export default function ItemForm({
-  isOpen,
-  onClose,
-  item,
-  collectionAttributes,
-}: {
+interface CustomField {
+  name: string;
+  value: string;
+}
+
+interface ItemFormProps {
   isOpen: boolean;
   onClose: () => void;
   item?: any;
   collectionAttributes?: any[];
-}) {
-  const queryClient = useQueryClient();
+}
 
+export default function ItemForm({ isOpen, onClose, item, collectionAttributes }: ItemFormProps) {
+  const queryClient = useQueryClient();
   const isEdit = !!item?.id;
+
+  const [name, setName] = useState(item?.name || '');
+  const [tags, setTags] = useState(item?.tags?.join(', ') || '');
+
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+
+  useEffect(() => {
+    if (collectionAttributes && collectionAttributes.length > 0) {
+      const initialFields = collectionAttributes.map((attr: any) => ({
+        name: attr.name,
+        value: item ? item[attr.name] || '' : '',
+      }));
+      setCustomFields(initialFields);
+    } else {
+      setCustomFields([]);
+    }
+  }, [item, collectionAttributes]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: any) => {
@@ -46,18 +59,31 @@ export default function ItemForm({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const attributes: Record<string, any> = {};
 
-    collectionAttributes?.forEach((attr) => {
-      attributes[attr.name] = formData.get(attr.name);
+    const attributes: Record<string, string> = {};
+    customFields.forEach((field) => {
+      if (field.name.trim() !== '') {
+        attributes[field.name.trim()] = field.value;
+      }
     });
 
     mutate({
-      name: formData.get('name'),
-      tags: formData.get('tags')?.toString().split(','),
+      name,
+      tags: tags.split(',').map((tag: string) => tag.trim()),
       attributes,
       collectionId: item?.collectionId,
+    });
+  };
+
+  const addCustomField = () => {
+    setCustomFields((prev) => [...prev, { name: '', value: '' }]);
+  };
+
+  const updateCustomField = (index: number, field: Partial<CustomField>) => {
+    setCustomFields((prev) => {
+      const newFields = [...prev];
+      newFields[index] = { ...newFields[index], ...field };
+      return newFields;
     });
   };
 
@@ -73,48 +99,58 @@ export default function ItemForm({
         {isEdit ? 'Edit Item' : 'New Item'}
       </ModalHeader>
       <ModalBody className='overflow-y-auto'>
-        <div className='space-y-4'>
-          <form onSubmit={handleSubmit}>
-            <Input
-              className='pb-4 gap-1'
-              name='name'
-              label='Name'
-              color='primary'
-              required
-              defaultValue={item?.name}
-            />
-            <Input
-              className='pb-4 gap-1'
-              name='tags'
-              label='Tags (comma separated)'
-              defaultValue={item?.tags?.join(', ')}
-            />
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <Input
+            className='pb-4'
+            name='name'
+            label='Name'
+            color='primary'
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <Input
+            className='pb-4'
+            name='tags'
+            label='Tags (comma separated)'
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+          />
 
-            {collectionAttributes?.map((attr) => (
+          {customFields.map((field, index) => (
+            <div key={index} className='flex gap-2'>
               <Input
-                className='pb-4 gap-1'
-                key={attr.name}
-                name={attr.name}
-                label={attr.label}
-                defaultValue={item?.[attr.name]}
+                className='pb-4'
+                name={`custom-name-${index}`}
+                label='Attribute Name'
+                placeholder='e.g. color'
+                value={field.name}
+                onChange={(e) => updateCustomField(index, { name: e.target.value })}
               />
-            ))}
-
-            <div className='flex justify-end gap-2 mt-4'>
-              <Button size='sm' variant='flat' color='danger' onPress={onClose}>
-                Cancel
-              </Button>
-              <Button
-                size='sm'
-                type='submit'
-                color='primary'
-                isLoading={isPending}
-              >
-                {isEdit ? 'Update' : 'Create'}
-              </Button>
+              <Input
+                className='pb-4'
+                name={`custom-value-${index}`}
+                label='Attribute Value'
+                placeholder='e.g. red'
+                value={field.value}
+                onChange={(e) => updateCustomField(index, { value: e.target.value })}
+              />
             </div>
-          </form>
-        </div>
+          ))}
+
+          <Button size='sm' variant='flat' onPress={addCustomField}>
+            Add Attribute
+          </Button>
+
+          <div className='flex justify-end gap-2 mt-4'>
+            <Button size='sm' variant='flat' color='danger' onPress={onClose}>
+              Cancel
+            </Button>
+            <Button size='sm' type='submit' color='primary' isLoading={isPending}>
+              {isEdit ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
       </ModalBody>
     </Modal>
   );
