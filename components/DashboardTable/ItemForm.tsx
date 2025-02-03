@@ -62,51 +62,59 @@ export default function ItemForm({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalHeader className='mx-2'>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      scrollBehavior='inside'
+      className='max-h-[80vh] z-[1001]'
+      size='2xl'
+    >
+      <ModalHeader className='mx-2 sticky top-0 bg-background z-10'>
         {isEdit ? 'Edit Item' : 'New Item'}
       </ModalHeader>
-      <ModalBody className='mx-1'>
-        <form onSubmit={handleSubmit}>
-          <Input
-            className='pb-4 gap-1'
-            name='name'
-            label='Name'
-            color='primary'
-            required
-            defaultValue={item?.name}
-          />
-          <Input
-            className='pb-4 gap-1'
-            name='tags'
-            label='Tags (comma separated)'
-            defaultValue={item?.tags?.join(', ')}
-          />
-
-          {collectionAttributes?.map((attr) => (
+      <ModalBody className='overflow-y-auto'>
+        <div className='space-y-4'>
+          <form onSubmit={handleSubmit}>
             <Input
               className='pb-4 gap-1'
-              key={attr.name}
-              name={attr.name}
-              label={attr.label}
-              defaultValue={item?.[attr.name]}
-            />
-          ))}
-
-          <div className='flex justify-end gap-2 mt-4'>
-            <Button size='sm' variant='flat' color='danger' onPress={onClose}>
-              Cancel
-            </Button>
-            <Button
-              size='sm'
-              type='submit'
+              name='name'
+              label='Name'
               color='primary'
-              isLoading={isPending}
-            >
-              {isEdit ? 'Update' : 'Create'}
-            </Button>
-          </div>
-        </form>
+              required
+              defaultValue={item?.name}
+            />
+            <Input
+              className='pb-4 gap-1'
+              name='tags'
+              label='Tags (comma separated)'
+              defaultValue={item?.tags?.join(', ')}
+            />
+
+            {collectionAttributes?.map((attr) => (
+              <Input
+                className='pb-4 gap-1'
+                key={attr.name}
+                name={attr.name}
+                label={attr.label}
+                defaultValue={item?.[attr.name]}
+              />
+            ))}
+
+            <div className='flex justify-end gap-2 mt-4'>
+              <Button size='sm' variant='flat' color='danger' onPress={onClose}>
+                Cancel
+              </Button>
+              <Button
+                size='sm'
+                type='submit'
+                color='primary'
+                isLoading={isPending}
+              >
+                {isEdit ? 'Update' : 'Create'}
+              </Button>
+            </div>
+          </form>
+        </div>
       </ModalBody>
     </Modal>
   );

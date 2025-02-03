@@ -1,5 +1,10 @@
 'use client';
 
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Key } from '@react-types/shared';
+import { toast } from 'react-toastify';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Table,
   TableHeader,
@@ -19,16 +24,13 @@ import {
   Listbox,
   CircularProgress,
 } from '@nextui-org/react';
-import CollectionForm from './CollectionForm';
-import ItemForm from './ItemForm';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { PlusIcon } from './PlusIcon';
 import { VerticalDotsIcon } from './VerticalDotsIcon';
 import { SearchIcon } from './SearchIcon';
 import { columns } from './data';
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Key } from '@react-types/shared';
-import { toast } from 'react-toastify';
+import CollectionForm from './CollectionForm';
+import ItemForm from './ItemForm';
 
 interface SortDescriptor {
   column: string;
@@ -47,11 +49,54 @@ function DashboardTable() {
   const [selectedCollection, setSelectedCollection] = useState<
     number | undefined
   >();
+  const [filterValue, setFilterValue] = useState<string>('');
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
+  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+    column: 'id',
+    direction: 'ascending',
+  });
+  const [page, setPage] = useState<number>(1);
+  const [showCollectionForm, setShowCollectionForm] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setEditingItem(null);
     setShowCollectionForm(false);
   }, [selectedCollection]);
+
+  const deleteCollection = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch('/api/collections', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['get_collections'] });
+      toast.success('Collection deleted');
+    },
+  });
+
+  const deleteItem = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch('/api/items', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['get_collection_elements'] });
+      toast.success('Item deleted');
+    },
+  });
 
   const tableColumns = useMemo(() => {
     if (!selectedCollection) {
@@ -95,9 +140,6 @@ function DashboardTable() {
     enabled: !!selectedCollection,
   });
 
-  const [filterValue, setFilterValue] = useState<string>('');
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
-
   const handleSelectionChange = (keys: 'all' | Set<Key>) => {
     if (keys === 'all') {
       setSelectedKeys(
@@ -108,11 +150,6 @@ function DashboardTable() {
     }
   };
 
-  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
-  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: 'id',
-    direction: 'ascending',
-  });
   const handleSortChange = (descriptor: any) => {
     setSortDescriptor({
       column: descriptor.column as string,
@@ -120,42 +157,7 @@ function DashboardTable() {
     });
   };
 
-  const [page, setPage] = useState<number>(1);
   const hasSearchFilter = Boolean(filterValue);
-  const queryClient = useQueryClient();
-  const [showCollectionForm, setShowCollectionForm] = useState(false);
-  const [editingCollection, setEditingCollection] = useState<any>(null);
-  const [editingItem, setEditingItem] = useState<any>(null);
-
-  const deleteCollection = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch('/api/collections', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['get_collections'] });
-      toast.success('Collection deleted');
-    },
-  });
-
-  const deleteItem = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch('/api/items', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['get_collection_elements'] });
-      toast.success('Item deleted');
-    },
-  });
 
   const filteredItems = useMemo(() => {
     if (!collectionItems || !Array.isArray(collectionItems)) {
@@ -303,6 +305,7 @@ function DashboardTable() {
                   toast.error('Please select a collection first');
                   return;
                 }
+                setShowCollectionForm(false);
                 setEditingItem({
                   collectionId: selectedCollection,
                 });
@@ -474,30 +477,36 @@ function DashboardTable() {
               )}
             </TableBody>
           </Table>
-          {showCollectionForm && (
-            <CollectionForm
-              isOpen={showCollectionForm}
-              onClose={() => setShowCollectionForm(false)}
-              collection={editingCollection}
-            />
-          )}
+          <div className='flex flex-row m-8 gap-4 justify-center align-center relative'>
+            {/* Render modals */}
+            <div className='fixed z-[1000]'>
+              {showCollectionForm && (
+                <CollectionForm
+                  isOpen={showCollectionForm}
+                  onClose={() => setShowCollectionForm(false)}
+                  collection={editingCollection}
+                />
+              )}
 
-          {editingItem && (
-            <ItemForm
-              key={editingItem.id ? editingItem.id : 'new-item'}
-              isOpen={!!editingItem}
-              onClose={() => setEditingItem(null)}
-              item={editingItem}
-              collectionAttributes={
-                selectedCollection
-                  ? JSON.parse(
-                      collections.find((c: any) => c.id === selectedCollection)
-                        ?.attributes || '[]'
-                    )
-                  : []
-              }
-            />
-          )}
+              {editingItem && (
+                <ItemForm
+                  key={editingItem.id ? editingItem.id : 'new-item'}
+                  isOpen={!!editingItem}
+                  onClose={() => setEditingItem(null)}
+                  item={editingItem}
+                  collectionAttributes={
+                    selectedCollection
+                      ? JSON.parse(
+                          collections.find(
+                            (c: any) => c.id === selectedCollection
+                          )?.attributes || '[]'
+                        )
+                      : []
+                  }
+                />
+              )}
+            </div>
+          </div>
         </>
       )}
     </div>

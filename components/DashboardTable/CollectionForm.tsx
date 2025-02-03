@@ -57,11 +57,14 @@ export default function CollectionForm({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      scrollBehavior="inside"
+      className="max-h-[80vh] z-[1001]"
+      size="2xl"
     >
-      <ModalHeader className='mx-2'>
+      <ModalHeader className='sticky top-0 bg-background z-10'>
         {collection ? 'Edit Collection' : 'New Collection'}
       </ModalHeader>
-      <ModalBody className='mx-1'>
+      <ModalBody className="overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <Input
             className='pb-4 gap-1'
