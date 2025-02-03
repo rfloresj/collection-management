@@ -19,13 +19,16 @@ import {
   Listbox,
   CircularProgress,
 } from '@nextui-org/react';
+import CollectionForm from './CollectionForm';
+import ItemForm from './ItemForm';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from './PlusIcon';
 import { VerticalDotsIcon } from './VerticalDotsIcon';
 import { SearchIcon } from './SearchIcon';
 import { columns } from './data';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Key } from '@react-types/shared';
-import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 
 interface SortDescriptor {
   column: string;
@@ -44,6 +47,11 @@ function DashboardTable() {
   const [selectedCollection, setSelectedCollection] = useState<
     number | undefined
   >();
+
+  useEffect(() => {
+    setEditingItem(null);
+    setShowCollectionForm(false);
+  }, [selectedCollection]);
 
   const tableColumns = useMemo(() => {
     if (!selectedCollection) {
@@ -79,17 +87,10 @@ function DashboardTable() {
         `/api/items?collectionId=${selectedCollection}`
       );
       const items = await response.json();
-
-      const parsedItems = items.map(
-        ({ attributes, ...rest }: { attributes: string }) => {
-          // console.log(attributes);
-          const customCols = attributes ? JSON.parse(attributes) : {};
-
-          return { ...rest, ...customCols };
-        }
-      );
-
-      return parsedItems;
+      return items.map((item: any) => ({
+        ...item,
+        ...item.attributes,
+      }));
     },
     enabled: !!selectedCollection,
   });
@@ -109,7 +110,7 @@ function DashboardTable() {
 
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: 'age',
+    column: 'id',
     direction: 'ascending',
   });
   const handleSortChange = (descriptor: any) => {
@@ -120,8 +121,41 @@ function DashboardTable() {
   };
 
   const [page, setPage] = useState<number>(1);
-
   const hasSearchFilter = Boolean(filterValue);
+  const queryClient = useQueryClient();
+  const [showCollectionForm, setShowCollectionForm] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
+
+  const deleteCollection = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch('/api/collections', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['get_collections'] });
+      toast.success('Collection deleted');
+    },
+  });
+
+  const deleteItem = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch('/api/items', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['get_collection_elements'] });
+      toast.success('Item deleted');
+    },
+  });
 
   const filteredItems = useMemo(() => {
     if (!collectionItems || !Array.isArray(collectionItems)) {
@@ -171,7 +205,7 @@ function DashboardTable() {
         return (
           <div className='flex flex-row gap-1'>
             {cellValue?.map?.((tag: string, index: number) => (
-              <Chip key={`${tag}-${index}`} color='primary'>
+              <Chip key={`${tag}-${index}`} color='secondary'>
                 {tag}
               </Chip>
             ))}
@@ -187,9 +221,23 @@ function DashboardTable() {
                 </Button>
               </DropdownTrigger>
               <DropdownMenu>
-                <DropdownItem key='view'>View</DropdownItem>
-                <DropdownItem key='edit'>Edit</DropdownItem>
-                <DropdownItem key='delete'>Delete</DropdownItem>
+                <DropdownItem
+                  key='edit'
+                  onPress={() => {
+                    console.log('Editing item', item);
+                    setEditingItem(item);
+                    setEditingCollection(null);
+                    setShowCollectionForm(false);
+                  }}
+                >
+                  Edit
+                </DropdownItem>
+                <DropdownItem
+                  key='delete'
+                  onPress={() => deleteItem.mutate(item.id)}
+                >
+                  Delete
+                </DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </div>
@@ -247,7 +295,19 @@ function DashboardTable() {
             onValueChange={onSearchChange}
           />
           <div className='flex gap-3'>
-            <Button color='primary' endContent={<PlusIcon />}>
+            <Button
+              color='primary'
+              endContent={<PlusIcon />}
+              onPress={() => {
+                if (!selectedCollection) {
+                  toast.error('Please select a collection first');
+                  return;
+                }
+                setEditingItem({
+                  collectionId: selectedCollection,
+                });
+              }}
+            >
               Add New
             </Button>
           </div>
@@ -331,13 +391,50 @@ function DashboardTable() {
               base: 'px-3 first:rounded-t-medium last:rounded-b-medium rounded-none gap-3 h-12 data-[hover=true]:bg-default-100/80',
             }}
             topContent={
-              <Button color='primary' className='mx-8 my-4'>
+              <Button
+                color='primary'
+                className='mx-8 my-4'
+                onPress={() => {
+                  setEditingCollection(null);
+                  setShowCollectionForm(true);
+                  setEditingItem(false);
+                }}
+              >
                 New Collection
               </Button>
             }
           >
-            {collections?.map(({ id, name }: any) => (
-              <ListboxItem key={id}>{name}</ListboxItem>
+            {collections?.map((collection: any) => (
+              <ListboxItem key={collection.id} textValue={collection.name}>
+                <div className='flex justify-between items-center w-full'>
+                  <span>{collection.name}</span>
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button isIconOnly size='sm' variant='light'>
+                        <VerticalDotsIcon className='text-default-300' />
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu>
+                      <DropdownItem
+                        key='edit'
+                        onPress={() => {
+                          setEditingCollection(collection);
+                          setShowCollectionForm(true);
+                          setEditingItem(null);
+                        }}
+                      >
+                        Edit
+                      </DropdownItem>
+                      <DropdownItem
+                        key='delete'
+                        onPress={() => deleteCollection.mutate(collection.id)}
+                      >
+                        Delete
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
+                </div>
+              </ListboxItem>
             ))}
           </Listbox>
           <Table
@@ -377,6 +474,30 @@ function DashboardTable() {
               )}
             </TableBody>
           </Table>
+          {showCollectionForm && (
+            <CollectionForm
+              isOpen={showCollectionForm}
+              onClose={() => setShowCollectionForm(false)}
+              collection={editingCollection}
+            />
+          )}
+
+          {editingItem && (
+            <ItemForm
+              key={editingItem.id ? editingItem.id : 'new-item'}
+              isOpen={!!editingItem}
+              onClose={() => setEditingItem(null)}
+              item={editingItem}
+              collectionAttributes={
+                selectedCollection
+                  ? JSON.parse(
+                      collections.find((c: any) => c.id === selectedCollection)
+                        ?.attributes || '[]'
+                    )
+                  : []
+              }
+            />
+          )}
         </>
       )}
     </div>
